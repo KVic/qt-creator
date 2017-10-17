@@ -162,7 +162,7 @@ QString Uncrustify::configurationFile() const
                 if (!file.endsWith("cfg"))
                     continue;
                 const QFileInfo fi(file);
-                if (fi.isReadable() && fi.fileName() == "uncrustify.cfg")
+                if (fi.isReadable() && fi.fileName().toLower().endsWith("uncrustify.cfg"))
                     return file;
             }
         }
