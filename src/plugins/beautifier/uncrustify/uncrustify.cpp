@@ -42,8 +42,6 @@
 #include <coreplugin/editormanager/ieditor.h>
 #include <coreplugin/idocument.h>
 #include <cppeditor/cppeditorconstants.h>
-#include <projectexplorer/projecttree.h>
-#include <projectexplorer/project.h>
 #include <texteditor/texteditor.h>
 #include <utils/fileutils.h>
 
@@ -111,24 +109,11 @@ QList<QObject *> Uncrustify::autoReleaseObjects()
 
 void Uncrustify::formatFile()
 {
-    const QString cfgFileName = configurationFile();
-    if (cfgFileName.isEmpty()) {
-        BeautifierPlugin::showError(BeautifierPlugin::msgCannotGetConfigurationFile(
-                                        tr(Constants::Uncrustify::DISPLAY_NAME)));
-    } else {
-        m_beautifierPlugin->formatCurrentFile(command(cfgFileName));
-    }
+    m_beautifierPlugin->formatCurrentFile(command(false));
 }
 
 void Uncrustify::formatSelectedText()
 {
-    const QString cfgFileName = configurationFile();
-    if (cfgFileName.isEmpty()) {
-        BeautifierPlugin::showError(BeautifierPlugin::msgCannotGetConfigurationFile(
-                                        tr(Constants::Uncrustify::DISPLAY_NAME)));
-        return;
-    }
-
     const TextEditor::TextEditorWidget *widget
             = TextEditor::TextEditorWidget::currentTextEditorWidget();
     if (!widget)
@@ -146,50 +131,32 @@ void Uncrustify::formatSelectedText()
         if (tc.positionInBlock() > 0)
             tc.movePosition(QTextCursor::EndOfLine);
         const int endPos = tc.position();
-        m_beautifierPlugin->formatCurrentFile(command(cfgFileName, true), startPos, endPos);
+        m_beautifierPlugin->formatCurrentFile(command(true), startPos, endPos);
     } else if (m_settings->formatEntireFileFallback()) {
         formatFile();
     }
 }
 
-QString Uncrustify::configurationFile() const
+ConfigurationSpecification Uncrustify::configurationSpecification() const
 {
-    if (m_settings->useCustomStyle())
-        return m_settings->styleFileName(m_settings->customStyle());
+    ConfigurationSpecification spec;
 
-    if (m_settings->useOtherFiles()) {
-        if (const ProjectExplorer::Project *project
-                = ProjectExplorer::ProjectTree::currentProject()) {
-            const QStringList files = project->files(ProjectExplorer::Project::AllFiles);
-            for (const QString &file : files) {
-                if (!file.endsWith("cfg"))
-                    continue;
-                const QFileInfo fi(file);
-                if (fi.isReadable() && fi.fileName() == "uncrustify.cfg")
-                    return file;
-            }
-        }
-    }
+    spec.useCustomStyle = m_settings->useCustomStyle();
+    spec.customStyleFilePath = Utils::FileName::fromString(
+        m_settings->styleFileName(m_settings->customStyle()));
+    spec.useProjectFile = m_settings->useOtherFiles();
+    spec.projectFileMask = "*uncrustify.cfg";
+    spec.useSpecificFile = m_settings->useSpecificConfigFile();
+    spec.specificFilePath = m_settings->specificConfigFile();
+    spec.useHomeFile = m_settings->useHomeFile();
+    spec.homeFileNames.append("uncrustify.cfg");
 
-    if (m_settings->useSpecificConfigFile()) {
-        const Utils::FileName file = m_settings->specificConfigFile();
-        if (file.exists())
-            return file.toString();
-    }
-
-    if (m_settings->useHomeFile()) {
-        const QString file = QDir::home().filePath("uncrustify.cfg");
-        if (QFile::exists(file))
-            return file;
-    }
-
-    return QString();
+    return spec;
 }
 
 Command Uncrustify::command() const
 {
-    const QString cfgFile = configurationFile();
-    return cfgFile.isEmpty() ? Command() : command(cfgFile, false);
+    return command(false);
 }
 
 bool Uncrustify::isApplicable(const Core::IDocument *document) const
@@ -197,10 +164,11 @@ bool Uncrustify::isApplicable(const Core::IDocument *document) const
     return m_settings->isApplicable(document);
 }
 
-Command Uncrustify::command(const QString &cfgFile, bool fragment) const
+Command Uncrustify::command(bool fragment) const
 {
     Command command;
     command.setExecutable(m_settings->command());
+    command.setSpecification(configurationSpecification());
     command.setProcessing(Command::PipeProcessing);
     if (m_settings->version() >= 62) {
         command.addOption("--assume");
@@ -214,7 +182,7 @@ Command Uncrustify::command(const QString &cfgFile, bool fragment) const
     if (fragment)
         command.addOption("--frag");
     command.addOption("-c");
-    command.addOption(cfgFile);
+    command.addOption("%configFile");
     return command;
 }
 

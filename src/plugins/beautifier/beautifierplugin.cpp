@@ -26,6 +26,7 @@
 #include "beautifierplugin.h"
 
 #include "beautifierconstants.h"
+#include "configurationdetector.h"
 #include "generaloptionspage.h"
 #include "generalsettings.h"
 
@@ -81,6 +82,21 @@ FormatTask format(FormatTask task)
     if (executable.isEmpty())
         return task;
 
+    QStringList options = task.command.options();
+    if (options.contains(QLatin1String("%configFile"))) {
+        // WARNING: Is it safe to detect the config file here?
+        QString config = ConfigurationDetector::detectConfiguration(task.command.specification(),
+                                                                    task.filePath);
+        if (config.isEmpty()) {
+            task.error
+                = BeautifierPlugin::tr("Cannot detect configuration file for source file \"%1\".")
+                  .arg(task.filePath);
+            return task;
+        }
+
+        options.replaceInStrings(QLatin1String("%configFile"), config);
+    }
+
     switch (task.command.processing()) {
     case Command::FileProcessing: {
         // Save text to temporary file
@@ -97,7 +113,6 @@ FormatTask format(FormatTask task)
         }
 
         // Format temporary file
-        QStringList options = task.command.options();
         options.replaceInStrings(QLatin1String("%file"), sourceFile.fileName());
         Utils::SynchronousProcess process;
         process.setTimeoutS(5);
@@ -123,7 +138,6 @@ FormatTask format(FormatTask task)
 
     case Command::PipeProcessing: {
         QProcess process;
-        QStringList options = task.command.options();
         options.replaceInStrings("%filename", QFileInfo(task.filePath).fileName());
         options.replaceInStrings("%file", task.filePath);
         process.start(executable, options);

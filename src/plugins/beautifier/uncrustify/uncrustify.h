@@ -59,8 +59,8 @@ private:
     QAction *m_formatFile = nullptr;
     QAction *m_formatRange = nullptr;
     UncrustifySettings *m_settings;
-    QString configurationFile() const;
-    Command command(const QString &cfgFile, bool fragment = false) const;
+    ConfigurationSpecification configurationSpecification() const;
+    Command command(bool fragment = false) const;
 };
 
 } // namespace Uncrustify

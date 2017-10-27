@@ -6,9 +6,11 @@ HEADERS += \
     beautifierconstants.h \
     beautifierplugin.h \
     command.h \
+    configurationdetector.h \
     configurationdialog.h \
     configurationeditor.h \
     configurationpanel.h \
+    configurationspecification.h \
     generaloptionspage.h \
     generalsettings.h \
     artisticstyle/artisticstyleconstants.h \
@@ -28,6 +30,7 @@ SOURCES += \
     abstractsettings.cpp \
     beautifierplugin.cpp \
     command.cpp \
+    configurationdetector.cpp \
     configurationdialog.cpp \
     configurationeditor.cpp \
     configurationpanel.cpp \

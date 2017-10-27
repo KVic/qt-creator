@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "configurationspecification.h"
+
 #include <QString>
 #include <QStringList>
 
@@ -47,6 +49,9 @@ public:
     QStringList options() const;
     void addOption(const QString &option);
 
+    const ConfigurationSpecification &specification() const;
+    void setSpecification(const ConfigurationSpecification &specification);
+
     Processing processing() const;
     void setProcessing(const Processing &processing);
 
@@ -59,6 +64,7 @@ public:
 private:
     QString m_executable;
     QStringList m_options;
+    ConfigurationSpecification m_specification;
     Processing m_processing = FileProcessing;
     bool m_pipeAddsNewline = false;
     bool m_returnsCRLF = false;

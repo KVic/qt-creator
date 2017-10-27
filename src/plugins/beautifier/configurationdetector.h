@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 Lorenz Haas
+** Copyright (C) 2017 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of Qt Creator.
@@ -23,75 +23,25 @@
 **
 ****************************************************************************/
 
-#include "command.h"
+#pragma once
+
+#include "configurationspecification.h"
 
 namespace Beautifier {
 namespace Internal {
 
-bool Command::isValid() const
+class ConfigurationDetector
 {
-    return !m_executable.isEmpty();
-}
+public:
+    static QString detectConfiguration(const ConfigurationSpecification &specification,
+                                       const QString &sourceFilePath = QString());
 
-QString Command::executable() const
-{
-    return m_executable;
-}
-
-void Command::setExecutable(const QString &executable)
-{
-    m_executable = executable;
-}
-
-QStringList Command::options() const
-{
-    return m_options;
-}
-
-void Command::addOption(const QString &option)
-{
-    m_options << option;
-}
-
-const ConfigurationSpecification &Command::specification() const
-{
-    return m_specification;
-}
-
-void Command::setSpecification(const ConfigurationSpecification &specification)
-{
-    m_specification = specification;
-}
-
-Command::Processing Command::processing() const
-{
-    return m_processing;
-}
-
-void Command::setProcessing(const Processing &processing)
-{
-    m_processing = processing;
-}
-
-bool Command::pipeAddsNewline() const
-{
-    return m_pipeAddsNewline;
-}
-
-void Command::setPipeAddsNewline(bool pipeAddsNewline)
-{
-    m_pipeAddsNewline = pipeAddsNewline;
-}
-
-bool Command::returnsCRLF() const
-{
-    return m_returnsCRLF;
-}
-
-void Command::setReturnsCRLF(bool returnsCRLF)
-{
-    m_returnsCRLF = returnsCRLF;
-}
+    static QString detectCustomStyleFile(const Utils::FileName &configFilePath);
+    static QString detectProjectFile(const QString &configFileMask,
+                                     const QString &sourceFilePath = QString());
+    static QString detectSpecificFile(const Utils::FileName &configFilePath);
+    static QString detectHomeFile(const QStringList &configFileNames);
+};
 
 } // namespace Internal
 } // namespace Beautifier
